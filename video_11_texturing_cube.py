@@ -100,6 +100,9 @@ def main():
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.itemsize * len(indices), indices, GL_STATIC_DRAW)
 
+    # 通过layout的方式传入属性值，比之前通过 glGetAttribLocation的形式方便
+    # 顶点shader属性out只要和片元shader in对应即能找到，gl_Position为顶点全局数据
+    # 属性pointer中第一个数字为layout序号，第二个为数据个数， stride?itemsize=4   pointer为字节偏移
     #position
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, cube.itemsize * 8, ctypes.c_void_p(0))
     glEnableVertexAttribArray(0)

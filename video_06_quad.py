@@ -51,7 +51,7 @@ def main():
     out vec4 outColor;
     void main()
     {
-        outColor = vec4(newColor, 1.0f);
+         outColor = vec4(newColor, 1.0f);
     }
     """
     shader = OpenGL.GL.shaders.compileProgram(OpenGL.GL.shaders.compileShader(vertex_shader, GL_VERTEX_SHADER),
@@ -73,16 +73,16 @@ def main():
     glVertexAttribPointer(color, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
     glEnableVertexAttribArray(color)
 
-
     glUseProgram(shader)
 
+    # 用于替换背景色，否则是黑色的背景
     glClearColor(0.2, 0.3, 0.2, 1.0)
 
     while not glfw.glfwWindowShouldClose(window):
         glfw.glfwPollEvents()
 
         glClear(GL_COLOR_BUFFER_BIT)
-
+        # 这里的6代表索引的个数，决定画三角形的多少，如果为3则只画一个三角形
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None)
 
         glfw.glfwSwapBuffers(window)

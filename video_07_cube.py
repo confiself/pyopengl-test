@@ -96,7 +96,7 @@ def main():
 
         rot_x = pyrr.Matrix44.from_x_rotation(0.5 * glfw.glfwGetTime() )
         rot_y = pyrr.Matrix44.from_y_rotation(0.8 * glfw.glfwGetTime() )
-
+        # 向顶点shader中传入mvp 矩阵，控制顶点变换
         transformLoc = glGetUniformLocation(shader, "transform")
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, rot_x * rot_y)
 
