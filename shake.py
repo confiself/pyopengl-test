@@ -19,44 +19,46 @@ def main():
         return
 
     glfw.glfwMakeContextCurrent(window)
-    #        positions        texture coords
-    cube = [-0.5, -0.5,  0.0, 1.0, 0.0, 0.0,   0.0, 0.0,
+    #        positions    colors    texture coords
+    vex = [-0.5, -0.5,  0.0, 1.0, 0.0, 0.0,   0.0, 0.0,
             0.5, -0.5,  0.0, 1.0, 0.0, 0.0,  1.0, 0.0,
             0.5,  0.5,  0.0, 1.0, 0.0, 0.0,  1.0, 1.0,
             -0.5,  0.5,  0.0, 1.0, 0.0, 0.0,   0.0, 1.0,
 
-           -0.16, -0.18, 0.0,1.0, 0.0, 0.0,  0.34, 0.32,
-           0.18, -0.19, 0.0,1.0, 0.0, 0.0, 0.68, 0.31,
-           0.16, 0.09, 0.0,1.0, 0.0, 0.0,  0.66, 0.59,
-           -0.14, 0.11, 0.0,1.0, 0.0, 0.0, 0.36, 0.61,
+           0.03, 0.04, 0.0, 0.9, 0.0, 0.0,  0.53, 0.54,
+           -0.14,0.03, 0.0,1.0, 0.0, 0.0,  0.36, 0.53,
+           0.01, 0.23, 0.0,1.0, 0.0, 0.0, 0.51, 0.73,
+           0.2, 0.05, 0.0,1.0, 0.0, 0.0,  0.7, 0.55,
+           0.02, -0.12, 0.0,1.0, 0.0, 0.0, 0.52, 0.38,
           ]
 
-    cube = numpy.array(cube, dtype = numpy.float32)
+    vex = numpy.array(vex, dtype = numpy.float32)
 
-    indices = [
-                0,  4,  7,  0,  1,  4,
-               4,  5,  1,  2,  5,  1,
-               2,  6,  5,  2,  6,  7,
-               2,  3,  7,  3,  7,  0,
-               4,  5,  6,  4,  6,  7
+    circle_indices = [
+        4, 5, 6,7, 8, 5
+    ]
+    main_indices = [
+                0, 1, 2, 0, 2, 3
                ]
 
-    indices = numpy.array(indices, dtype= numpy.uint32)
+    main_indices = numpy.array(main_indices, dtype= numpy.uint32)
+    circle_indices = numpy.array(circle_indices, dtype= numpy.uint32)
 
     vertex_shader = """
     #version 330
     in layout(location = 0) vec3 position;
-    in layout(location = 1) vec2 textureCoords;
+    in layout(location = 1) vec3 colors;
+    in layout(location = 2) vec2 textureCoords;
     out vec2 newTexture;
     uniform float xDiff;
     vec3 newPosition; 
     void main()
     {
-        newPosition.xyz = position.xyz; 
-        if (position.x >= -0.25 && position.x <= 0.25){
+        newPosition.xyz = position.xyz;
+        if ( colors.r == 0.9){
             newPosition.x = newPosition.x + xDiff;
+            newPosition.y = newPosition.y + xDiff;
         }
-        
         gl_Position = vec4(newPosition, 1.0f);
         newTexture = textureCoords;
     }
@@ -78,18 +80,17 @@ def main():
 
     VBO = glGenBuffers(1)
     glBindBuffer(GL_ARRAY_BUFFER, VBO)
-    glBufferData(GL_ARRAY_BUFFER, cube.itemsize * len(cube), cube, GL_STATIC_DRAW)
-
-    EBO = glGenBuffers(1)
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.itemsize * len(indices), indices, GL_STATIC_DRAW)
+    glBufferData(GL_ARRAY_BUFFER, vex.itemsize * len(vex), vex, GL_STATIC_DRAW)
 
     #position
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, cube.itemsize * 8, ctypes.c_void_p(0))
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vex.itemsize * 8, ctypes.c_void_p(0))
     glEnableVertexAttribArray(0)
-    #texture
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, cube.itemsize * 8, ctypes.c_void_p(24))
+    #color
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, vex.itemsize * 8, ctypes.c_void_p(12))
     glEnableVertexAttribArray(1)
+    #texture
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, vex.itemsize * 8, ctypes.c_void_p(24))
+    glEnableVertexAttribArray(2)
 
 
     texture = glGenTextures(1)
@@ -102,7 +103,7 @@ def main():
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
     # load image
     # image = Image.open("res/crate.jpg")
-    image = Image.open("res/2egg.jpeg")
+    image = Image.open("res/egg.jpg")
     img_data = numpy.array(list(image.getdata()), numpy.uint8)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, img_data)
     glEnable(GL_TEXTURE_2D)
@@ -119,12 +120,28 @@ def main():
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        value = ((int(math.modf(glfw.glfwGetTime())[0] * 100)) % 30 - 15)  / 30 / 10
+        EBO = glGenBuffers(1)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, main_indices.itemsize * len(main_indices), main_indices, GL_STATIC_DRAW)
+
+
+        # glDrawElements(GL_TRIANGLES, len(main_indices), GL_UNSIGNED_INT, None)
+
+        EBO = glGenBuffers(1)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_indices.itemsize * len(circle_indices), circle_indices, GL_STATIC_DRAW)
+        value = ((int(math.modf(glfw.glfwGetTime())[0] * 100)) % 30 - 15) / 30 / 10
         print(value)
         xDiff = glGetUniformLocation(shader, "xDiff")
-        glUniform1f(xDiff, value)
-        glDrawElements(GL_TRIANGLES, len(indices), GL_UNSIGNED_INT, None)
+        glUniform1f(xDiff, value * 0.5)
+        glDrawElements(GL_TRIANGLE_FAN, len(circle_indices), GL_UNSIGNED_INT, None)
 
+        EBO = glGenBuffers(1)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, main_indices.itemsize * len(main_indices), main_indices, GL_STATIC_DRAW)
+
+
+        glDrawElements(GL_TRIANGLES, len(main_indices), GL_UNSIGNED_INT, None)
 
         glfw.glfwSwapBuffers(window)
 
